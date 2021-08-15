@@ -22,21 +22,12 @@ namespace LeftRecursion
 
         private void Begin(Context context)
         {
-            if (this is CallExpression c)
-            {
-                context.CallStack.Push(new CallInfo { Name = c.Name, Index = context.Index });
-            }
-
-            if (context.CallStack.Count > 1000)
-                throw new Exception("Nope.");
+            
         }
 
         private void End(Context context)
         {
-            if (this is CallExpression)
-            {
-                context.CallStack.Pop();
-            }
+            
         }
     }
 }
