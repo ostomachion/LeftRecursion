@@ -12,7 +12,7 @@ namespace LeftRecursion
             Value = value;
         }
 
-        public override IEnumerable<string> RunInternal(Context context)
+        public override IEnumerable<string> Run(Context context)
         {
             if (context.Index != context.Input.Length && context.Input[context.Index] == Value)
             {

@@ -13,7 +13,7 @@ namespace LeftRecursion
             Expressions = expressions;
         }
         
-        public override IEnumerable<string> RunInternal(Context context)
+        public override IEnumerable<string> Run(Context context)
         {
             foreach (var expression in Expressions)
             {
