@@ -1,0 +1,10 @@
+Begin left-recursion if you reach a call (inner) to a function call (outer) already in the call stack without making progress
+Fail inner immediately
+When outer returns
+    Store the result
+    Call the function again
+    Run until to reach left-recursion condition again (inner)
+    Pass inner immediately with stored result
+    Repeat?
+If outer fails
+    ???
