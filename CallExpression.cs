@@ -20,44 +20,46 @@ namespace LeftRecursion
 
             var function = context.Functions[Name];
 
-            // If the same function calls itself before making any progress.
-            if (context.CallStack.Any(x => x.Name == Name) && context.CallStack.Peek().Index == context.Index)
+            // Check for left-recursion.
+            var caller = context.CallStack.FirstOrDefault(x => x.Name == Name);
+            if (caller?.Index == context.Index)
             {
-                if (context.State == State.Normal)
+                if (caller.RecursiveResult is null)
                 {
-                    // Trying the function again will lead to a loop.
-                    context.State = State.LeftRecursive;
                     yield break;
-                }
-                else if (context.State == State.LeftRecursive)
-                {
-                    // Return the stored value.
-                    var result = context.RecursiveResult ?? throw new InvalidOperationException("Null.");
-                    context.RecursiveResult = null;
-                    context.State = State.Normal; // Is this right?
-                    yield return result;
                 }
                 else
                 {
-                    throw new InvalidOperationException("This shouldn't happen.");
+                    yield return caller.RecursiveResult;
+                    yield break;
                 }
             }
 
-            context.CallStack.Push(new() { Name = Name, Index = context.Index });
-            foreach (var result in function.Run(context))
+            context.CallStack.Push(new(Name, context.Index) { RecursiveResult = caller?.RecursiveResult });
+
+            var stack = new Stack<IEnumerator<string>>();
+            stack.Push(function.Run(context).GetEnumerator());
+
+            while (stack.Any())
             {
-                context.CallStack.Pop();
-                if (context.State == State.LeftRecursive)
+                if (stack.Peek().MoveNext())
                 {
-                    context.RecursiveResult = result;
-                    // Recurse.
-                    foreach (var innerResult in Run(context))
+                    var result = stack.Peek().Current;
+
+                    context.CallStack.Peek().RecursiveResult = result; // TODO: Make RecursiveResult a stack?
+                    stack.Push(function.Run(context).GetEnumerator());
+                }
+                else
+                {
+                    stack.Pop();
+                    if (stack.Any())
                     {
+                        context.CallStack.Pop();
+                        var result = stack.Peek().Current;
                         yield return result;
+                        context.CallStack.Push(new(Name, context.Index));
                     }
                 }
-                yield return result;
-                context.CallStack.Push(new() { Name = Name, Index = context.Index });
             }
             context.CallStack.Pop();
         }

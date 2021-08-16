@@ -16,6 +16,7 @@ namespace LeftRecursion
         {
             if (context.Index != context.Input.Length && context.Input[context.Index] == Value)
             {
+                context.Index++;
                 yield return Value.ToString();
             }
         }
