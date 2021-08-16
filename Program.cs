@@ -2,7 +2,7 @@
 using System;
 using LeftRecursion;
 
-var context = new Context("x?");
+var context = new Context("x?!");
 
 // <f> = <f> ('?' | '!') | 'x'
 context.Functions.Add("f",

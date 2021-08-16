@@ -6,7 +6,7 @@ namespace LeftRecursion
     {
         public string Name { get; }
         public int Index { get; }
-        public string? RecursiveResult { get; set; } = null;
+        public Stack<string> RecursiveResult { get; } = new();
 
         public CallInfo(string name, int index)
         {

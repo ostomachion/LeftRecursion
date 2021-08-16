@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,24 +19,28 @@ namespace LeftRecursion
             if (context.CallStack.Count == 64)
                 throw new Exception("Nope.");
 
+            var index = context.Index;
+
             var function = context.Functions[Name];
 
             // Check for left-recursion.
             var caller = context.CallStack.FirstOrDefault(x => x.Name == Name);
             if (caller?.Index == context.Index)
             {
-                if (caller.RecursiveResult is null)
-                {
-                    yield break;
-                }
-                else
-                {
-                    yield return caller.RecursiveResult;
-                    yield break;
-                }
+                if (caller.RecursiveResult.Any())
+                    yield return caller.RecursiveResult.Peek();
+
+                yield break;
             }
 
-            context.CallStack.Push(new(Name, context.Index) { RecursiveResult = caller?.RecursiveResult });
+            context.CallStack.Push(new(Name, context.Index));
+            if (caller is not null)
+            {
+                foreach (var result in caller.RecursiveResult.Reverse())
+                {
+                    context.CallStack.Peek().RecursiveResult.Push(result);
+                }
+            }
 
             var stack = new Stack<IEnumerator<string>>();
             stack.Push(function.Run(context).GetEnumerator());
@@ -46,7 +51,7 @@ namespace LeftRecursion
                 {
                     var result = stack.Peek().Current;
 
-                    context.CallStack.Peek().RecursiveResult = result; // TODO: Make RecursiveResult a stack?
+                    context.CallStack.Peek().RecursiveResult.Push(result);
                     stack.Push(function.Run(context).GetEnumerator());
                 }
                 else
@@ -54,10 +59,16 @@ namespace LeftRecursion
                     stack.Pop();
                     if (stack.Any())
                     {
-                        context.CallStack.Pop();
-                        var result = stack.Peek().Current;
-                        yield return result;
-                        context.CallStack.Push(new(Name, context.Index));
+                        var head = context.CallStack.Pop();
+                        head.RecursiveResult.TryPeek(out var prevResult);
+                        var originalIndex = context.Index;
+                        while (head.RecursiveResult.TryPop(out string? result))
+                        {
+                            context.Index += result.Length - prevResult!.Length;
+                            yield return result;
+                        }
+                        context.Index = originalIndex;
+                        context.CallStack.Push(head);
                     }
                 }
             }
